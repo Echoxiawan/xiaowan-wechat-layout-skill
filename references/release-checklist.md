@@ -53,11 +53,15 @@
 - [ ] 人物图能看清正文需要证明的人物、动作或产品。
 - [ ] 多图已预合成，等高对齐、间距一致。
 - [ ] 图注包含画面内容与来源。
+- [ ] 复制版已用 `scripts/inline_images.py` 内嵌为 base64，单文件 ≤ 10MB，图片带 `data-w`。
+- [ ] 复制版里没有本地路径（`./`、`/Users/`、`file://`）；脚本残留本地路径时应报错，而不是忽略。
+- [ ] 图床/远程图片已在后台逐张确认能显示；破掉的图已用 `--inline-remote` 转成 base64 后重粘。
+- [ ] 粘贴后图片 `src` 已变成 `mmbiz.qpic.cn`；仍是 `data:image/...` 的，已改用素材库 URL 后重新粘贴。
 
 ## 个人识别
 
 - [ ] 使用用户自己的头像、IP 或标识。
-- [ ] 图片不是本地临时路径。
+- [ ] 图片不是本地临时路径（复制版可以是 base64，发布版必须是 `mmbiz.qpic.cn` 或可访问 URL）。
 - [ ] 粘贴后个人识别资产仍存在。
 - [ ] 作者签名为用户确认版本。
 
@@ -66,7 +70,7 @@
 - [ ] 已运行 `gzh-design/scripts/validate_gzh_html.py`，ERROR 为 0；WARNING 已逐条判断并说明。
 - [ ] 没有设置任何 `font-family`（代码块等宽字体除外）。
 - [ ] 没有 `!important`、`<style>`、`<script>`、`class`、`id`、`position: absolute/fixed`、`float`、`@media`、CSS 变量。
-- [ ] 没有写死 `width: NNNpx` 的文字容器；表格用百分比列宽；`<img>` 带 `data-w` 且宽度为 `100%`。
+- [ ] 没有写死 `width: NNNpx` 的文字容器；表格用百分比列宽；`<img>` 带 `data-w`，样式为 `max-width: 100%; height: auto`。
 - [ ] `line-height` 不小于字号；`height: 0` 或固定高度容器内没有文字（纯图拼接除外）。
 - [ ] 没有用 `opacity: 0` 的图片承载画面；没有 `caret-color: transparent`、`text-align: start/end`。
 - [ ] `<pre>` 只包代码且可换行；正文段落用 `<section>`／`<p>`。

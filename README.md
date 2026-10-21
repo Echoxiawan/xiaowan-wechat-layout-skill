@@ -40,10 +40,11 @@
 
 - 调用 `gzh-design` 生成公众号 HTML；
 - 生成干净正文、带复制按钮的预览版和发布稳定版；
+- 图片按"素材库/图床 https 优先，base64 兜底"处理：`scripts/inline_images.py` 内嵌本地图、保留可用的远程 URL，远程图破图时用 `--inline-remote` 转内嵌，生成可直接整篇复制的单文件；
 - 多图进入公众号前预先拼好；
 - 按官方[《微信公众平台编辑器插件开发规范》](https://developers.weixin.qq.com/doc/service/guide/product/plugin_spec.html)校验字体、宽度、行高与深色模式，并跑 `gzh-design` 的校验脚本到 0 ERROR；
 - 检查约 390px 手机宽度并切换深色模式；
-- 粘贴到公众号后台检查丢图、乱码、错位和断行；
+- 粘贴到公众号后台检查丢图、乱码、错位和断行，并确认图片已转存到 `mmbiz.qpic.cn`；
 - 把最终人工调整区分为单篇特例或长期偏好。
 
 ## 实际案例

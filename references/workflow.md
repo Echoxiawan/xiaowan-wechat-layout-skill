@@ -116,9 +116,10 @@
 2. 应用用户偏好与本 Skill 的覆盖规则，但不得越过官方规范红线（见 `wechat-spec-compliance.md`）；
 3. 多图预先合成静态拼图；
 4. 输出干净版、预览复制版和发布稳定版；复制按钮与脚本只留在预览壳；
-5. 运行 `gzh-design/scripts/validate_gzh_html.py`，ERROR 清零，WARNING 逐条判断；
-6. 条件允许时用官方 CLI（`wechatjs/verify-article-structure-spec`）做实测终验，以退出码 `0` 为准；
-7. 以约 390px 视口检查完整长截图，并切深色模式看一遍。
+5. 图片按"素材库/图床 https 优先，base64 兜底"处理：复制版用 `python3 scripts/inline_images.py <干净正文.html>` 内嵌本地图、保留远程 URL；粘完发现远程图破图，加 `--inline-remote` 重跑转内嵌。确认体积在 10MB 内、图片补上了 `data-w`、产物里 0 处本地路径（脚本默认拦截，报错就先补图）；发布稳定版保留素材库 URL 作为兜底；
+6. 运行 `gzh-design/scripts/validate_gzh_html.py`，ERROR 清零，WARNING 逐条判断；
+7. 条件允许时用官方 CLI（`wechatjs/verify-article-structure-spec`）做实测终验，以退出码 `0` 为准；
+8. 以约 390px 视口检查完整长截图，并切深色模式看一遍。
 
 若 `gzh-design` 的自动目录、逐段下划线、引言卡或装饰与个人风格卡冲突，以个人风格卡为准；与官方规范冲突时，以官方规范为准。
 
@@ -127,7 +128,7 @@
 复制进公众号后台后检查：
 
 - 个人识别图片是否存在；
-- 所有图片是否正常；
+- 所有图片是否正常，且 `src` 已转成 `mmbiz.qpic.cn`；仍是 `data:image/...` 说明没被编辑器接住，改走素材库 URL 再发；
 - 拼图是否错位；
 - 图标是否乱码；
 - 正文字号、颜色与行距是否被改写；

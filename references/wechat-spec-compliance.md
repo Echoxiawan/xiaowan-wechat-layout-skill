@@ -31,7 +31,7 @@
 | 字体 #3 | 任何 `font-family`（含“只给中文加衬线”） | 不写，走平台默认字体栈；气质靠字重、字距、行高、字号、留白。等宽代码字体是唯一例外 |
 | 标签与属性（粘贴） | `<div>`、`class`、`id`、`<style>`、`<script>`、`<link>` | 一律 `<section>` + 内联 `style`；脚本与按钮只留在预览壳 |
 | 优先级 #4.5.2 | `!important` | 正常层叠；需要覆盖就用更具体的内联样式 |
-| 宽度 #1.4 | 含文字的容器写死 `width: 586px` | `width: 100%` / `max-width: 100%`；表格列宽用百分比；`<img>` 加 `data-w` 且 `width: 100%` |
+| 宽度 #1.4 | 含文字的容器写死 `width: 586px` | `width: 100%` / `max-width: 100%`；表格列宽用百分比；`<img>` 加 `data-w`，样式用 `max-width: 100%; height: auto`（不用 `width: 100%`，小图会被拉糊） |
 | 居中 #1.4.1 | 定宽 + 居中，大屏变左对齐 | 居中使用 `margin: 0 auto` + 百分比/max-width |
 | 溢出 #1.4.2 | `margin-left: 294pt`、表头固定列宽 | 用内边距、百分比、`box-sizing: border-box` |
 | 行高 #1.3 | `line-height: 0` 里包多行文字 | 行高 ≥ 字号；`line-height: 0` 只用于纯图片无缝拼接 |
@@ -47,7 +47,23 @@
 
 `data-ignore-width` 只豁免宽度检测，不豁免行高、高度、对齐等其他规则，并且会连同子树一起跳过——只在横向滚动、刻意的视觉裁切等场景使用，并在交付里写明理由。
 
-## 三、Dark Mode（官方规范 #4）
+## 三、图片与 base64
+
+**结论先说**：base64 是「复制载体」，不是「发布形态」。公众号文章最终引用的图片必须落在 `mmbiz.qpic.cn`，编辑器会在保存／发布时处理或过滤 `data:` URI。因此：
+
+- **优先级**：素材库／图床 `https` URL ＞ base64 ＞ 本地路径（禁止）。URL 版更轻、发布后能单独换图；base64 不依赖任何服务器，但体积涨约 33%，且发布后不可替换。
+- **"图床能用"只能粘完才知道**：防盗链、按 UA 拦截、`http` 混用、链接过期，在本地浏览器里都看不出来。所以先用 URL，粘进后台逐张确认；破掉的再转 base64。
+- **本地图片必须先处理**：复制时剪贴板传的是 HTML 字符串，不是图片字节。本地路径（`./a.jpg`、`/Users/...`、`file://`）粘进后台一定破图——微信取不到你磁盘上的文件。所以本地图只有两条出路：内嵌成 base64，或先上传拿到 `https` 地址。
+- **两版交付**：
+  - 内嵌版（复制用）：`python3 scripts/inline_images.py article.html` 默认内嵌本地图、保留 http(s)；粘完发现某张远程图破了，用 `--inline-remote` 重跑把远程图也抓下来内嵌（抓取失败只告警并保留 URL，本地抓不到不代表微信抓不到）；脚本默认**拒绝写出**任何仍含本地路径的文件，除非显式加 `--allow-local`；
+  - 发布稳定版：图片用可访问 URL（素材库 / `mmbiz.qpic.cn`），作为 base64 被吞掉时的兜底。
+- **粘贴后必须验证**：粘进后台后检查图片的 `src`。已变成 `mmbiz.qpic.cn` ＝ 转存成功；仍是 `data:image/...` 或显示空白 ＝ 编辑器没接住，改用素材库 URL，别直接发布。
+- **体积**：base64 会让体积涨约 33%。单图压到 1–2MB 以内，单文件控制在 10MB 内（脚本默认上限）；超限先压缩或拼图，否则剪贴板和编辑器会卡。整篇图片多时，可分两批粘贴。
+- **不替代素材库**：base64 无法单独替换某张图、无法带 `data-w` 之外的图片元信息，也不进入公众号素材管理；需要反复改图的封面、头图仍应上传素材库。
+- **图片样式**：`max-width: 100%; height: auto; display: block; margin: 0 auto` + `data-w`（原图像素宽）。内嵌脚本会自动补 `data-w`、`max-width` 和 `height: auto`。
+- **允许的例外**：极小图标（≤120px 的角标、分隔符）内嵌后体积可忽略，可以长期用 base64；正文照片不建议。
+
+## 四、Dark Mode（官方规范 #4）
 
 - **颜色**：正文与背景对比度 ≥ 4.5:1；≥18px 或加粗文字 ≥ 3:1。浅灰弱化文字（如 `#9ea096` 在米白底上只有约 2.6:1）不要用来承载成段正文或图注。
 - **渐变**：文字与卡片的背景用纯色；渐变只用于下方没有文字的装饰块。暗色模式会把文字背景渐变压成纯色，中间调、透明叠加和格子纹理都会丢失。
@@ -57,26 +73,27 @@
 - **SVG**：能改就用 `stroke="currentColor" fill="currentColor"`，或给一块跟随主题的底色。
 - **豁免**：`data-no-dark`（单节点跳过转换）、`data-ignore-dm="low-contrast text-bg-gradient"` 只在深色模式实测确认无问题后局部使用，并写进交付说明。
 
-## 四、本项目自己的结构约定
+## 五、本项目自己的结构约定
 
 ```text
 根 <section style="width: 100%">
 ├─ 段落 <section>／<p>
 │  └─ <span leaf=""> 行内内容（文本／span／strong／img）
-├─ 图片 <section> → <img data-w="1080" style="width: 100%; height: auto; display: block">
+├─ 图片 <section> → <img data-w="1080" style="max-width: 100%; height: auto; display: block; margin: 0 auto">
 └─ 图片组：同一容器内并排，统一间距，不逐个加外边距
 ```
 
 - 不手写编辑器私有属性（`leaf`、`nodeleaf`、`data-imgqrcoded`、`contenteditable` 等）；本项目只用 `data-w`、`data-ignore-width`、`data-no-dark`、`data-ignore-dm`。
 - 预览壳只用于本地：`<button>`、`<script>`、`class`、`id` 都留在壳里，粘进公众号的必须是干净正文 `<section>`。校验只对干净正文跑，不对预览页跑。
 
-## 五、交付时附一句合规结论
+## 六、交付时附一句合规结论
 
 至少在交付里说明：
 
 ```text
 静态度量：validate_gzh_html.py → ERROR 0；WARNING N 条（已逐条判断：……）
 官方实测：verify-article-structure-spec → 退出码 0（或：环境无 Node，未跑）
+图片：内嵌版 N 张 / 共 X MB；粘贴后已转存 mmbiz（或：仍为 data:，待换素材库 URL）
 真机：375–390px 长截图正常；后台粘贴无丢图/乱码；深色模式已检查
 豁免：data-ignore-width ×1（横向滚动代码块）
 ```
